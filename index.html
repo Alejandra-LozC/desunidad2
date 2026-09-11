@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío Anatómico - Universidad Anáhuac</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #ffffff;
+            color: #444444;
+            overflow-x: hidden;
+        }
+
+        .nes-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Scanlines effect */
+        .nes-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.05),
+                rgba(0, 0, 0, 0.05) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Anáhuac Colors */
+        .anahuac-naranja { color: #ff5900; }
+        .anahuac-naranja-claro { color: #fd8103; }
+        .anahuac-morado { color: #432f64; }
+        .anahuac-morado-claro { color: #5d428c; }
+        .anahuac-lila { color: #cdb9ef; }
+        .anahuac-azul { color: #0f66ab; }
+        .anahuac-gris-oscuro { color: #444444; }
+        .anahuac-gris { color: #666666; }
+        .anahuac-blanco { color: #ffffff; }
+        .anahuac-negro { color: #000000; }
+
+        .bg-naranja { background: #ff5900; }
+        .bg-naranja-claro { background: #fd8103; }
+        .bg-morado { background: #432f64; }
+        .bg-morado-claro { background: #5d428c; }
+        .bg-lila { background: #cdb9ef; }
+        .bg-azul { background: #0f66ab; }
+        .bg-gris-oscuro { background: #444444; }
+        .bg-gris { background: #666666; }
+        .bg-blanco { background: #ffffff; }
+
+        /* Title Screen */
+        #titleScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #432f64 0%, #5d428c 100%);
+            text-align: center;
+            position: relative;
+        }
+
+        .title-main {
+            font-size: 48px;
+            font-weight: bold;
+            color: #fd8103;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 4px 4px 0 #ff5900;
+        }
+
+        .title-sub {
+            font-size: 64px;
+            font-weight: bold;
+            color: #ffffff;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 0 #ff5900;
+        }
+
+        .title-edition {
+            font-size: 24px;
+            color: #cdb9ef;
+            font-weight: bold;
+            margin-bottom: 40px;
+        }
+
+        .title-info {
+            font-size: 14px;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .title-unit {
+            font-size: 12px;
+            color: #fd8103;
+            margin-bottom: 50px;
+        }
+
+        /* Character */
+        .character {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            image-rendering: pixelated;
+            animation: characterBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes characterBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* Buttons */
+        .nes-btn {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 12px 30px;
+            border: 3px solid #ffffff;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .nes-btn:hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+
+        .nes-btn:active {
+            transform: scale(0.95);
+        }
+
+        .nes-btn-naranja {
+            background: #ff5900;
+            color: #ffffff;
+        }
+
+        .nes-btn-morado {
+            background: #432f64;
+            color: #ffffff;
+        }
+
+        .nes-btn-azul {
+            background: #0f66ab;
+            color: #ffffff;
+        }
+
+        /* Login Screen */
+        #loginScreen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #ffffff;
+        }
+
+        .login-title {
+            font-size: 24px;
+            color: #432f64;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 400px;
+        }
+
+        .login-label {
+            font-size: 14px;
+            color: #444444;
+        }
+
+        .login-input {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            padding: 10px;
+            background: #cdb9ef;
+            color: #432f64;
+            border: 2px solid #ff5900;
+            outline: none;
+        }
+
+        .login-input:focus {
+            border-color: #432f64;
+        }
+
+        .login-status {
+            font-size: 11px;
+            color: #0f66ab;
+            font-style: italic;
+        }
+
+        /* Game Screen */
+        #gameScreen {
+            display: none;
+            min-height: 100vh;
+            background: #cdb9ef;
+            padding: 20px;
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .game-main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border: 2px solid #ff5900;
+            background: #ffffff;
+        }
+
+        .game-player {
+            font-size: 14px;
+            color: #432f64;
+            font-weight: bold;
+        }
+
+        .game-score {
+            font-size: 14px;
+            color: #ff5900;
+            font-weight: bold;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .game-btn {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 6px 12px;
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            background: #432f64;
+            color: #ffffff;
+        }
+
+        .game-btn:hover {
+            filter: brightness(1.2);
+        }
+
+        /* Character in game */
+        .game-character {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            background: #ffffff;
+            border: 2px solid #ff5900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .game-character canvas {
+            image-rendering: pixelated;
+        }
+
+        /* Jeopardy Board */
+        .jeopardy-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .jeopardy-category {
+            background: #ff5900;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #432f64;
+        }
+
+        .jeopardy-cell {
+            background: #0f66ab;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 25px;
+            text-align: center;
+            border: 2px solid #432f64;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .jeopardy-cell:hover:not(.answered) {
+            background: #ff5900;
+            transform: scale(1.05);
+        }
+
+        .jeopardy-cell.answered {
+            background: #666666;
+            color: #ffffff;
+            cursor: not-allowed;
+        }
+
+        .game-footer {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 10px;
+            background: #ffffff;
+            border: 2px solid #ff5900;
+        }
+
+        .footer-stat {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Achievements Panel */
+        .achievements-panel {
+            background: #ffffff;
+            border: 3px solid #ff5900;
+            padding: 15px;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .achievements-title {
+            font-size: 18px;
+            color: #432f64;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ff5900;
+            padding-bottom: 10px;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 2px solid #666666;
+            background: #cdb9ef;
+            transition: all 0.3s;
+        }
+
+        .achievement-item.unlocked {
+            background: #fd8103;
+            border-color: #ff5900;
+            box-shadow: 0 0 10px #ff5900;
+            animation: achievementGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes achievementGlow {
+            0%, 100% { box-shadow: 0 0 10px #ff5900; }
+            50% { box-shadow: 0 0 20px #ff5900, 0 0 30px #fd8103; }
+        }
+
+        .achievement-icon {
+            font-size: 28px;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .achievement-info {
+            flex: 1;
+        }
+
+        .achievement-name {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 3px;
+            color: #432f64;
+        }
+
+        .achievement-desc {
+            font-size: 10px;
+            color: #444444;
+        }
+
+        .achievement-status {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .achievements-progress {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #ff5900;
+            font-size: 14px;
+            color: #ff5900;
+            font-weight: bold;
+        }
+
+        /* Question Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(67, 47, 100, 0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border: 3px solid #ff5900;
+            padding: 30px;
+            max-width: 700px;
+            width: 90%;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-category {
+            font-size: 18px;
+            color: #432f64;
+            font-weight: bold;
+        }
+
+        .modal-value {
+            font-size: 18px;
+            color: #ff5900;
+            font-weight: bold;
+        }
+
+        .modal-question {
+            font-size: 16px;
+            color: #444444;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .modal-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .modal-option {
+            background: #cdb9ef;
+            color: #444444;
+            border: 2px solid #432f64;
+            padding: 12px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .modal-option:hover {
+            background: #0f66ab;
+            color: #ffffff;
+        }
+
+        .modal-option.selected {
+            background: #ff5900;
+            border-color: #432f64;
+            color: #ffffff;
+        }
+
+        .modal-timer {
+            text-align: center;
+            font-size: 20px;
+            color: #ff5900;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .modal-btn {
+            width: 100%;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 12px;
+            background: #0f66ab;
+            color: #ffffff;
+            border: 3px solid #432f64;
+            cursor: pointer;
+        }
+
+        .modal-btn:disabled {
+            background: #666666;
+            cursor: not-allowed;
+        }
+
+        /* Feedback */
+        .feedback {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border: 4px solid #ff5900;
+            padding: 40px;
+            z-index: 3000;
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .feedback-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .feedback-text {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .feedback-explanation {
+            font-size: 13px;
+            color: #444444;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Achievement Celebration */
+        .achievement-celebration {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border: 5px solid #ff5900;
+            padding: 50px;
+            z-index: 4000;
+            text-align: center;
+            min-width: 500px;
+            box-shadow: 0 0 50px #ff5900;
+            animation: celebrationPulse 0.5s ease-in-out;
+        }
+
+        @keyframes celebrationPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .celebration-title {
+            font-size: 24px;
+            color: #ff5900;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .celebration-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: iconRotate 2s ease-in-out infinite;
+        }
+
+        @keyframes iconRotate {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.2); }
+        }
+
+        .celebration-name {
+            font-size: 20px;
+            color: #432f64;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .celebration-desc {
+            font-size: 14px;
+            color: #444444;
+        }
+
+        /* Results */
+        #resultsScreen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #ffffff;
+            text-align: center;
+        }
+
+        .results-title {
+            font-size: 32px;
+            color: #432f64;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .results-score {
+            font-size: 48px;
+            color: #ff5900;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .results-details {
+            font-size: 14px;
+            color: #444444;
+            margin-bottom: 30px;
+        }
+
+        .results-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Stars animation */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #cdb9ef;
+            animation: twinkle 2s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+            .achievements-panel {
+                position: static;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .title-main { font-size: 32px; }
+            .title-sub { font-size: 42px; }
+            .jeopardy-board { grid-template-columns: repeat(2, 1fr); }
+            .game-header { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+
+    <!-- Title Screen -->
+    <div id="titleScreen" class="nes-container">
+        <div class="title-main">DESAFÍO</div>
+        <div class="title-sub">ANATÓMICO</div>
+        <div class="title-edition">★ UNIVERSIDAD ANÁHUAC ★</div>
+        <div class="title-info">Enfermedad de Caffey y Colágeno Tipo I</div>
+        <div class="title-unit">Sistema Locomotor - Anatomía Humana</div>
+        
+        <canvas id="titleCharacter" class="character" width="80" height="80"></canvas>
+        
+        <button class="nes-btn nes-btn-naranja" onclick="showLogin()">▶ INICIAR JUEGO</button>
+        <div style="margin-top: 40px; font-size: 10px; color: #ffffff;">
+            PRESIONA START PARA COMENZAR<br>
+            © 2026 - ING. BIOMÉDICA
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="nes-container">
+        <div class="login-title">★ SELECT PLAYER ★</div>
+        <div class="login-form">
+            <div class="login-label">INGRESA TU ID DE ESTUDIANTE</div>
+            <input type="text" id="studentId" class="login-input" placeholder="Ej: A01234567">
+            <div id="loginStatus" class="login-status"></div>
+            <button class="nes-btn nes-btn-naranja" onclick="login()">► ENTRAR</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="nes-container">
+        <div class="game-layout">
+            <div class="game-main">
+                <div class="game-header">
+                    <div class="game-player" id="playerName">PLAYER: ---</div>
+                    <div class="game-score" id="playerScore">SCORE: 0000</div>
+                    <div class="game-controls">
+                        <button class="game-btn" onclick="endGame()">FINALIZAR</button>
+                    </div>
+                </div>
+
+                <div class="game-character">
+                    <canvas id="gameCharacter" width="100" height="100"></canvas>
+                </div>
+
+                <div class="jeopardy-board" id="jeopardyBoard"></div>
+
+                <div class="game-footer">
+                    <div class="footer-stat anahuac-morado" id="attempts">INTENTOS: 0</div>
+                    <div class="footer-stat anahuac-naranja" id="bestScore">MEJOR: 0000</div>
+                    <div class="footer-stat anahuac-gris-oscuro" id="progress">PREGUNTAS: 0/16</div>
+                </div>
+            </div>
+
+            <!-- Achievements Panel -->
+            <div class="achievements-panel">
+                <div class="achievements-title">★ LOGROS ★</div>
+                <div id="achievementList"></div>
+                <div class="achievements-progress" id="achievementsProgress">0 / 8</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Modal -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-category" id="modalCategory">CATEGORÍA</div>
+                <div class="modal-value" id="modalValue">100 PTS</div>
+            </div>
+            <div class="modal-question" id="modalQuestion">Pregunta aquí</div>
+            <div class="modal-options" id="modalOptions"></div>
+            <div class="modal-timer" id="modalTimer">⏱ 45s</div>
+            <button class="modal-btn" id="modalBtn" onclick="submitAnswer()" disabled>RESPONDER</button>
+        </div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback" class="feedback">
+        <div class="feedback-icon" id="feedbackIcon">✅</div>
+        <div class="feedback-text" id="feedbackText">¡CORRECTO!</div>
+        <div class="feedback-explanation" id="feedbackExplanation">Explicación</div>
+        <button class="nes-btn nes-btn-naranja" onclick="closeFeedback()">CONTINUAR</button>
+    </div>
+
+    <!-- Achievement Celebration -->
+    <div id="achievementCelebration" class="achievement-celebration">
+        <div class="celebration-title">★ ¡NUEVO LOGRO! ★</div>
+        <div class="celebration-icon" id="celebrationIcon">★</div>
+        <div class="celebration-name" id="celebrationName">LOGRO</div>
+        <div class="celebration-desc" id="celebrationDesc">Descripción</div>
+        <button class="nes-btn nes-btn-naranja" style="margin-top: 30px;" onclick="closeCelebration()">CONTINUAR</button>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="nes-container">
+        <div class="results-title" id="resultsTitle">RONDA TERMINADA</div>
+        <div class="results-score" id="resultsScore">0000 / 4000</div>
+        <div class="results-details" id="resultsDetails"></div>
+        <div class="results-buttons">
+            <button class="nes-btn nes-btn-naranja" onclick="restartGame()">REINTENTAR</button>
+            <button class="nes-btn nes-btn-azul" onclick="downloadCSV()">DESCARGAR CSV</button>
+        </div>
+    </div>
+
+    <script>
+        // ====== CONFIGURACIÓN ======
+        const TIEMPO_PREGUNTA = 45;
+        const ARCHIVO_ESTUDIANTES = 'estudiantes.json';
+
+        // ====== ESTADO ======
+        let estudiantes = {};
+        let estudianteActual = null;
+        let puntajeActual = 0;
+        let mejorPuntaje = 0;
+        let intentos = 0;
+        let preguntasContestadas = new Set();
+        let categoriasContestadas = new Set();
+        let tiempoTotal = 0;
+        let acertadas = 0;
+        let falladas = 0;
+        let logrosDesbloqueados = new Set();
+        let preguntaActual = null;
+        let timerInterval = null;
+        let tiempoRestante = 0;
+        let opcionSeleccionada = -1;
+
+        // ====== PREGUNTAS ======
+        const categorias = ["PUBLICACIÓN", "ANATOMÍA", "COLÁGENO", "BIOMEDICINA"];
+        const valores = [100, 200, 300, 400];
+        const tablero = [];
+
+        // Inicializar tablero
+        function inicializarTablero() {
+            const preguntas = [
+                // PUBLICACIÓN
+                [
+                    {cat: "PUBLICACIÓN", val: 100, enun: "REVISTA: Nombre de la revista indexada donde se publicó el artículo.", ops: ["The Lancet", "Universitas Médica", "Nature Medicine", "Revista Médica Ecuador"], correcta: 1, retro: "El artículo se publicó en Universitas Médica, revista indexada de la Pontificia Universidad Javeriana."},
+                    {cat: "PUBLICACIÓN", val: 200, enun: "IDENTIFICADOR: Código único y permanente que identifica al artículo.", ops: ["ISBN", "PMID", "DOI", "ISSN"], correcta: 2, retro: "El DOI es como la huella digital del artículo: nunca cambia y permite encontrarlo siempre."},
+                    {cat: "PUBLICACIÓN", val: 300, enun: "VOLUMEN: ¿En qué volumen y número se publicó el artículo (año 2019)?", ops: ["Vol. 55, No. 1", "Vol. 60, No. 2", "Vol. 45, No. 3", "Vol. 70, No. 4"], correcta: 1, retro: "Se publicó en el Volumen 60, Número 2, correspondiente a abril-junio 2019."},
+                    {cat: "PUBLICACIÓN", val: 400, enun: "ÉTICA: ¿Qué comité aprobó el protocolo de investigación del caso?", ops: ["Comité Internacional", "Comité de Ética institucional", "Comité de Pacientes", "No requirió aprobación"], correcta: 1, retro: "El protocolo fue enviado al comité de ética institucional para su revisión y aprobación."}
+                ],
+                // ANATOMÍA
+                [
+                    {cat: "ANATOMÍA", val: 100, enun: "MEMBRANA: Estructura que recubre externamente al hueso (excepto en articulaciones).", ops: ["Endostio", "Periostio", "Epimisio", "Pericondrio"], correcta: 1, retro: "El periostio es la 'piel del hueso': membrana de tejido conectivo que lo cubre por fuera."},
+                    {cat: "ANATOMÍA", val: 200, enun: "PORCIÓN: Parte del hueso largo donde ocurre la hiperostosis cortical.", ops: ["Epífisis", "Metáfisis", "Diáfisis", "Fisis"], correcta: 2, retro: "La diáfisis es el cuerpo central del hueso largo. Ahí ocurre el engrosamiento característico."},
+                    {cat: "ANATOMÍA", val: 300, enun: "HUESOS: Huesos que se afectan típicamente en la Enfermedad de Caffey.", ops: ["Cráneo y vértebra", "Tibias, radio, maxilar inferior y clavículas", "Solo manos y pies", "Pelvis y sacro"], correcta: 1, retro: "Las zonas típicas son tibias, radios, maxilar inferior y clavículas."},
+                    {cat: "ANATOMÍA", val: 400, enun: "TEJIDO: Tipo de tejido que forma el periostio.", ops: ["Tejido epitelial", "Tejido muscular", "Tejido conectivo denso", "Tejido nervioso"], correcta: 2, retro: "El periostio está formado por tejido conectivo denso, rico en vasos y nervios."}
+                ],
+                // COLÁGENO
+                [
+                    {cat: "COLÁGENO", val: 100, enun: "PROPIEDAD: Propiedad que le da el colágeno tipo I al hueso.", ops: ["Rigidez total", "Resistencia a la tracción y flexibilidad", "Conductividad", "Contracción"], correcta: 1, retro: "El colágeno tipo I es como las 'varillas de acero': da flexibilidad y resistencia a la tracción."},
+                    {cat: "COLÁGENO", val: 200, enun: "PORCENTAJE: Porcentaje de la matriz ósea que es colágeno tipo I.", ops: ["10%", "50%", "90%", "100%"], correcta: 2, retro: "Aproximadamente el 90% de la matriz ósea es colágeno tipo I. El resto son minerales."},
+                    {cat: "COLÁGENO", val: 300, enun: "TEJIDOS: ¿Por qué una alteración del colágeno I afecta hueso, piel y articulaciones?", ops: ["Misma arteria", "Es componente de la matriz extracelular en múltiples tejidos conectivos", "Conexión nerviosa", "Mismo origen muscular"], correcta: 1, retro: "El colágeno tipo I está en hueso, piel, tendones y cápsulas articulares. Si falla, todos se afectan."},
+                    {cat: "COLÁGENO", val: 400, enun: "GEN: Gen donde ocurre la mutación asociada a la Enfermedad de Caffey.", ops: ["COL1A1", "COL2A1", "FBN1", "ELN"], correcta: 0, retro: "La mutación ocurre en el gen COL1A1, específicamente una transición 3040 C>T en el exón 41."}
+                ],
+                // BIOMEDICINA
+                [
+                    {cat: "BIOMEDICINA", val: 100, enun: "SCAFFOLD: Al diseñar un andamio para la diáfisis, ¿qué característica replicar?", ops: ["Color blanco", "Estructura fibrilar y resistencia a tracción", "Conductividad eléctrica", "Contracción rítmica"], correcta: 1, retro: "Un buen scaffold debe imitar la estructura fibrilar del colágeno para la osteointegración."},
+                    {cat: "BIOMEDICINA", val: 200, enun: "IA-IMAGEN: Para detectar la enfermedad en radiografías, ¿dónde enfocar el algoritmo?", ops: ["Epífisis", "Diáfisis de huesos largos buscando engrosamiento cortical", "Exclusivamente cráneo", "Discos intervertebrales"], correcta: 1, retro: "El algoritmo debe buscar engrosamiento cortical en la diáfisis de tibia y radio."},
+                    {cat: "BIOMEDICINA", val: 300, enun: "MATERIAL: Material ideal para un scaffold de colágeno defectuoso.", ops: ["Metal puro", "Compuesto polímero-cerámico con fibras", "Vidrio", "Madera"], correcta: 1, retro: "Un compuesto polímero-cerámico con fibras imita mejor la matriz ósea natural."},
+                    {cat: "BIOMEDICINA", val: 400, enun: "DISPOSITIVO: Dispositivo biomédico para monitorear la evolución.", ops: ["Electrocardiógrafo", "Software de análisis de imágenes radiológicas", "Oxímetro", "Glucómetro"], correcta: 1, retro: "Un software de análisis de imágenes radiológicas permite cuantificar el engrosamiento cortical."}
+                ]
+            ];
+
+            for (let c = 0; c < 4; c++) {
+                tablero[c] = [];
+                for (let v = 0; v < 4; v++) {
+                    tablero[c][v] = preguntas[c][v];
+                    tablero[c][v].id = `${categorias[c]}_${valores[v]}`;
+                    tablero[c][v].contestada = false;
+                }
+            }
+        }
+
+        // ====== LOGROS ======
+        const logros = [
+            {id: "PRIMERA_VEZ", nombre: "PRIMERA PARTIDA", desc: "Completa el juego por primera vez", icono: "★", color: "#ff5900"},
+            {id: "COLECCIONISTA", nombre: "COLECCIONISTA", desc: "Obtén al menos 1000 puntos", icono: "◆", color: "#0f66ab"},
+            {id: "EXPLORADOR", nombre: "EXPLORADOR", desc: "Contesta preguntas de las 4 categorías", icono: "✦", color: "#5d428c"},
+            {id: "PERSISTENTE", nombre: "PERSISTENTE", desc: "Completa el tablero entero", icono: "▲", color: "#fd8103"},
+            {id: "VELOCISTA", nombre: "VELOCISTA", desc: "Termina con tiempo total menor a 200s", icono: "⚡", color: "#ff5900"},
+            {id: "SIN_FALLOS", nombre: "IMPECABLE", desc: "Completa sin fallar ninguna pregunta", icono: "♦", color: "#432f64"},
+            {id: "MAESTRO", nombre: "MAESTRO ANATÓMICO", desc: "Obtén los 4000 puntos", icono: "♛", color: "#ff5900"},
+            {id: "PERFECTO_1", nombre: "PERFECTO AL PRIMER INTENTO", desc: "4000 puntos en tu primer intento", icono: "★", color: "#432f64"}
+        ];
+
+        // ====== PERSONAJE PIXEL ART ======
+        const characterSprite = [
+            [0,0,0,1,1,1,1,0,0,0],
+            [0,0,1,2,2,2,2,1,0,0],
+            [0,1,2,3,2,2,3,2,1,0],
+            [0,1,2,2,2,2,2,2,1,0],
+            [0,0,1,2,4,4,2,1,0,0],
+            [0,0,0,1,1,1,1,0,0,0],
+            [0,0,1,5,5,5,5,1,0,0],
+            [0,1,5,5,5,5,5,5,1,0],
+            [0,1,5,5,5,5,5,5,1,0],
+            [0,0,1,5,5,5,5,1,0,0],
+            [0,0,1,6,0,0,6,1,0,0],
+            [0,0,1,6,0,0,6,1,0,0]
+        ];
+
+        const characterColors = {
+            0: 'transparent',
+            1: '#000000',  // borde negro
+            2: '#fd8103',  // cara naranja claro
+            3: '#432f64',  // ojos morado oscuro
+            4: '#ff5900',  // boca naranja
+            5: '#0f66ab',  // cuerpo azul
+            6: '#444444'   // piernas gris oscuro
+        };
+
+        function drawCharacter(canvas, scale = 8) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const spriteWidth = characterSprite[0].length;
+            const spriteHeight = characterSprite.length;
+            const offsetX = (canvas.width - spriteWidth * scale) / 2;
+            const offsetY = (canvas.height - spriteHeight * scale) / 2;
+
+            for (let y = 0; y < spriteHeight; y++) {
+                for (let x = 0; x < spriteWidth; x++) {
+                    const colorKey = characterSprite[y][x];
+                    if (colorKey !== 0) {
+                        ctx.fillStyle = characterColors[colorKey];
+                        ctx.fillRect(
+                            offsetX + x * scale,
+                            offsetY + y * scale,
+                            scale,
+                            scale
+                        );
+                    }
+                }
+            }
+        }
+
+        // ====== AUDIO ======
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function playTone(freq, duration, delay = 0) {
+            if (!audioCtx) return;
+            setTimeout(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = freq;
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration / 1000);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + duration / 1000);
+            }, delay);
+        }
+
+        function beepSelect() { playTone(800, 80); }
+        function beepCorrecto() { playTone(1000, 100); playTone(1500, 100, 100); }
+        function beepError() { playTone(200, 200); }
+        function beepStart() { playTone(600, 100); playTone(800, 100, 100); playTone(1000, 150, 200); }
+        function beepAchievement() {
+            playTone(784, 100);
+            playTone(988, 100, 100);
+            playTone(1175, 100, 200);
+            playTone(1568, 300, 300);
+        }
+
+        // ====== INICIALIZACIÓN ======
+        async function init() {
+            inicializarTablero();
+            crearEstrellas();
+            await cargarEstudiantes();
+            drawCharacter(document.getElementById('titleCharacter'), 8);
+        }
+
+        function crearEstrellas() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        async function cargarEstudiantes() {
+            try {
+                const response = await fetch(ARCHIVO_ESTUDIANTES);
+                const data = await response.json();
+                estudiantes = {};
+                data.forEach(e => {
+                    estudiantes[e.id] = e.nombre;
+                });
+                document.getElementById('loginStatus').textContent = 
+                    `JUGADORES REGISTRADOS: ${Object.keys(estudiantes).length}`;
+            } catch (error) {
+                console.error('Error cargando estudiantes:', error);
+                document.getElementById('loginStatus').textContent = 
+                    'Error cargando lista de estudiantes';
+            }
+        }
+
+        // ====== NAVEGACIÓN ======
+        function showScreen(screenId) {
+            document.querySelectorAll('.nes-container').forEach(s => s.style.display = 'none');
+            document.getElementById(screenId).style.display = 'flex';
+        }
+
+        function showLogin() {
+            initAudio();
+            beepStart();
+            showScreen('loginScreen');
+        }
+
+        function showGame() {
+            beepSelect();
+            showScreen('gameScreen');
+            drawCharacter(document.getElementById('gameCharacter'), 10);
+            actualizarListaLogros();
+        }
+
+        // ====== LOGIN ======
+        function login() {
+            const id = document.getElementById('studentId').value.trim();
+            
+            if (!id) {
+                beepError();
+                alert('INGRESA TU ID');
+                return;
+            }
+
+            if (!estudiantes[id]) {
+                beepError();
+                alert('ID NO ENCONTRADO\nVERIFICA CON TU DOCENTE');
+                return;
+            }
+
+            estudianteActual = {
+                id: id,
+                nombre: estudiantes[id]
+            };
+
+            beepSelect();
+            
+            if (confirm(`PLAYER: ${estudianteActual.nombre.toUpperCase()}\nID: ${estudianteActual.id}\n\n¿INICIAR DESAFÍO?`)) {
+                iniciarJuego();
+            }
+        }
+
+        // ====== JUEGO ======
+        function iniciarJuego() {
+            puntajeActual = 0;
+            preguntasContestadas.clear();
+            categoriasContestadas.clear();
+            tiempoTotal = 0;
+            acertadas = 0;
+            falladas = 0;
+            
+            // Resetear tablero
+            for (let c = 0; c < 4; c++) {
+                for (let v = 0; v < 4; v++) {
+                    tablero[c][v].contestada = false;
+                }
+            }
+
+            document.getElementById('playerName').textContent = 
+                `PLAYER: ${estudianteActual.nombre.toUpperCase()}`;
+            
+            actualizarUI();
+            construirTablero();
+            showGame();
+        }
+
+        function construirTablero() {
+            const board = document.getElementById('jeopardyBoard');
+            board.innerHTML = '';
+
+            // Categorías
+            categorias.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'jeopardy-category';
+                div.textContent = cat;
+                board.appendChild(div);
+            });
+
+            // Celdas
+            for (let v = 0; v < 4; v++) {
+                for (let c = 0; c < 4; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'jeopardy-cell';
+                    cell.textContent = valores[v];
+                    cell.dataset.col = c;
+                    cell.dataset.val = v;
+                    
+                    if (tablero[c][v].contestada) {
+                        cell.classList.add('answered');
+                        cell.textContent = '✓';
+                    } else {
+                        cell.onclick = () => mostrarPregunta(c, v);
+                    }
+                    
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function actualizarUI() {
+            document.getElementById('playerScore').textContent = 
+                `SCORE: ${String(puntajeActual).padStart(4, '0')}`;
+            document.getElementById('attempts').textContent = 
+                `INTENTOS: ${intentos}`;
+            document.getElementById('bestScore').textContent = 
+                `MEJOR: ${String(mejorPuntaje).padStart(4, '0')}`;
+            document.getElementById('progress').textContent = 
+                `PREGUNTAS: ${preguntasContestadas.size}/16`;
+            
+            document.getElementById('achievementsProgress').textContent = 
+                `${logrosDesbloqueados.size} / ${logros.length}`;
+        }
+
+        // ====== PREGUNTA ======
+        function mostrarPregunta(col, val) {
+            if (tablero[col][val].contestada) return;
+
+            preguntaActual = tablero[col][val];
+            opcionSeleccionada = -1;
+            tiempoRestante = TIEMPO_PREGUNTA;
+
+            document.getElementById('modalCategory').textContent = 
+                `★ ${preguntaActual.cat} ★`;
+            document.getElementById('modalValue').textContent = 
+                `${preguntaActual.val} PTS`;
+            document.getElementById('modalQuestion').textContent = 
+                preguntaActual.enun;
+
+            const optionsDiv = document.getElementById('modalOptions');
+            optionsDiv.innerHTML = '';
+            preguntaActual.ops.forEach((op, i) => {
+                const div = document.createElement('div');
+                div.className = 'modal-option';
+                div.textContent = op;
+                div.onclick = () => seleccionarOpcion(i, div);
+                optionsDiv.appendChild(div);
+            });
+
+            document.getElementById('modalBtn').disabled = true;
+            document.getElementById('questionModal').style.display = 'flex';
+
+            beepStart();
+            iniciarTimer();
+        }
+
+        function seleccionarOpcion(index, element) {
+            document.querySelectorAll('.modal-option').forEach(el => 
+                el.classList.remove('selected'));
+            element.classList.add('selected');
+            opcionSeleccionada = index;
+            document.getElementById('modalBtn').disabled = false;
+            beepSelect();
+        }
+
+        function iniciarTimer() {
+            document.getElementById('modalTimer').textContent = 
+                `⏱ ${tiempoRestante}s`;
+            
+            timerInterval = setInterval(() => {
+                tiempoRestante--;
+                document.getElementById('modalTimer').textContent = 
+                    `⏱ ${tiempoRestante}s`;
+                
+                if (tiempoRestante <= 10) {
+                    document.getElementById('modalTimer').style.color = '#ff5900';
+                }
+                
+                if (tiempoRestante <= 0) {
+                    clearInterval(timerInterval);
+                    enviarRespuesta(-1);
+                }
+            }, 1000);
+        }
+
+        function submitAnswer() {
+            if (opcionSeleccionada === -1) return;
+            clearInterval(timerInterval);
+            enviarRespuesta(opcionSeleccionada);
+        }
+
+        function enviarRespuesta(respuesta) {
+            const correcta = respuesta === preguntaActual.correcta;
+            const tiempoUsado = TIEMPO_PREGUNTA - tiempoRestante;
+            tiempoTotal += tiempoUsado;
+
+            if (correcta) {
+                puntajeActual += preguntaActual.val;
+                acertadas++;
+                beepCorrecto();
+            } else {
+                falladas++;
+                beepError();
+            }
+
+            categoriasContestadas.add(preguntaActual.cat);
+            preguntasContestadas.add(preguntaActual.id);
+            preguntaActual.contestada = true;
+
+            document.getElementById('questionModal').style.display = 'none';
+            mostrarFeedback(correcta, preguntaActual.retro);
+            
+            actualizarUI();
+            construirTablero();
+            verificarLogros();
+
+            if (preguntasContestadas.size === 16) {
+                setTimeout(() => finalizarRonda(), 2000);
+            }
+        }
+
+        function mostrarFeedback(correcta, explicacion) {
+            const feedback = document.getElementById('feedback');
+            document.getElementById('feedbackIcon').textContent = correcta ? '✅' : '❌';
+            document.getElementById('feedbackText').textContent = 
+                correcta ? `¡CORRECTO! +${preguntaActual.val} PTS` : 'INCORRECTO';
+            document.getElementById('feedbackText').style.color = 
+                correcta ? '#ff5900' : '#432f64';
+            document.getElementById('feedbackExplanation').textContent = 
+                `💡 ${explicacion}`;
+            
+            feedback.style.display = 'block';
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedback').style.display = 'none';
+        }
+
+        // ====== LOGROS ======
+        function verificarLogros() {
+            if (!logrosDesbloqueados.has('PRIMERA_VEZ') && preguntasContestadas.size > 0) {
+                logrosDesbloqueados.add('PRIMERA_VEZ');
+                celebrarLogro('PRIMERA_VEZ');
+            }
+            if (!logrosDesbloqueados.has('COLECCIONISTA') && puntajeActual >= 1000) {
+                logrosDesbloqueados.add('COLECCIONISTA');
+                celebrarLogro('COLECCIONISTA');
+            }
+            if (!logrosDesbloqueados.has('EXPLORADOR') && categoriasContestadas.size === 4) {
+                logrosDesbloqueados.add('EXPLORADOR');
+                celebrarLogro('EXPLORADOR');
+            }
+            if (!logrosDesbloqueados.has('PERSISTENTE') && preguntasContestadas.size === 16) {
+                logrosDesbloqueados.add('PERSISTENTE');
+                celebrarLogro('PERSISTENTE');
+            }
+            if (!logrosDesbloqueados.has('VELOCISTA') && preguntasContestadas.size === 16 && tiempoTotal < 200) {
+                logrosDesbloqueados.add('VELOCISTA');
+                celebrarLogro('VELOCISTA');
+            }
+            if (!logrosDesbloqueados.has('SIN_FALLOS') && preguntasContestadas.size === 16 && falladas === 0) {
+                logrosDesbloqueados.add('SIN_FALLOS');
+                celebrarLogro('SIN_FALLOS');
+            }
+            if (!logrosDesbloqueados.has('MAESTRO') && puntajeActual === 4000) {
+                logrosDesbloqueados.add('MAESTRO');
+                celebrarLogro('MAESTRO');
+            }
+            if (!logrosDesbloqueados.has('PERFECTO_1') && puntajeActual === 4000 && intentos === 0) {
+                logrosDesbloqueados.add('PERFECTO_1');
+                celebrarLogro('PERFECTO_1');
+            }
+            
+            actualizarListaLogros();
+        }
+
+        function celebrarLogro(id) {
+            const logro = logros.find(l => l.id === id);
+            if (logro) {
+                beepAchievement();
+                
+                document.getElementById('celebrationIcon').textContent = logro.icono;
+                document.getElementById('celebrationIcon').style.color = logro.color;
+                document.getElementById('celebrationName').textContent = logro.nombre;
+                document.getElementById('celebrationDesc').textContent = logro.desc;
+                
+                document.getElementById('achievementCelebration').style.display = 'block';
+            }
+        }
+
+        function closeCelebration() {
+            document.getElementById('achievementCelebration').style.display = 'none';
+        }
+
+        function actualizarListaLogros() {
+            const list = document.getElementById('achievementList');
+            list.innerHTML = '';
+
+            logros.forEach(logro => {
+                const unlocked = logrosDesbloqueados.has(logro.id);
+                const item = document.createElement('div');
+                item.className = `achievement-item ${unlocked ? 'unlocked' : ''}`;
+                
+                item.innerHTML = `
+                    <div class="achievement-icon" style="color: ${unlocked ? logro.color : '#666666'}">
+                        ${unlocked ? logro.icono : '?'}
+                    </div>
+                    <div class="achievement-info">
+                        <div class="achievement-name" style="color: ${unlocked ? '#ffffff' : '#432f64'}">
+                            ${unlocked ? logro.nombre : '???'}
+                        </div>
+                        <div class="achievement-desc" style="color: ${unlocked ? '#ffffff' : '#444444'}">
+                            ${unlocked ? logro.desc : 'Sigue jugando para desbloquear'}
+                        </div>
+                    </div>
+                    <div class="achievement-status" style="color: ${unlocked ? '#ffffff' : '#666666'}">
+                        ${unlocked ? '✓' : '✗'}
+                    </div>
+                `;
+                
+                list.appendChild(item);
+            });
+        }
+
+        // ====== FINALIZAR ======
+        function finalizarRonda() {
+            intentos++;
+            if (puntajeActual > mejorPuntaje) {
+                mejorPuntaje = puntajeActual;
+            }
+
+            const esPerfecto = puntajeActual === 4000;
+            
+            document.getElementById('resultsTitle').textContent = 
+                esPerfecto ? '★ PERFECT SCORE! ★' : 'RONDA TERMINADA';
+            document.getElementById('resultsTitle').style.color = 
+                esPerfecto ? '#ff5900' : '#432f64';
+            
+            document.getElementById('resultsScore').textContent = 
+                `${puntajeActual} / 4000`;
+            
+            document.getElementById('resultsDetails').innerHTML = `
+                MEJOR: ${mejorPuntaje} | INTENTOS: ${intentos}<br>
+                Logros: ${logrosDesbloqueados.size} / ${logros.length}<br>
+                ${esPerfecto ? '¡ERES UN MAESTRO DE LA ANATOMÍA!' : '¡PUEDES REINTENTAR HASTA OBTENER 4000!'}
+            `;
+
+            showScreen('resultsScreen');
+        }
+
+        function endGame() {
+            if (confirm('¿Finalizar la ronda actual?')) {
+                finalizarRonda();
+            }
+        }
+
+        function restartGame() {
+            iniciarJuego();
+        }
+
+        // ====== CSV ======
+        function downloadCSV() {
+            const fecha = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const nombreArchivo = `resultado_${estudianteActual.id}_${fecha}.csv`;
+            
+            const csv = [
+                `"Estudiante","${estudianteActual.nombre}"`,
+                `"ID","${estudianteActual.id}"`,
+                `"Fecha y hora","${new Date().toLocaleString('es-ES')}"`,
+                `"Puntaje total",${puntajeActual}`,
+                `"Intentos",${intentos}`,
+                `"Mejor puntaje",${mejorPuntaje}`,
+                `"Tiempo total (s)",${tiempoTotal}`,
+                `"Preguntas acertadas",${acertadas}`,
+                `"Preguntas falladas",${falladas}`,
+                `"Logros desbloqueados","${Array.from(logrosDesbloqueados).join(' | ')}"`,
+                `"Total preguntas",${preguntasContestadas.size}`,
+                `"Puntaje maximo posible",4000`
+            ].join('\n');
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = nombreArchivo;
+            link.click();
+
+            alert(`CSV descargado: ${nombreArchivo}\n\nSube este archivo a la carpeta "resultados" del repositorio de GitHub.`);
+        }
+
+        // ====== INICIAR ======
+        window.onload = init;
+    </script>
+</body>
+</html>
