@@ -308,6 +308,10 @@
         // CONFIGURACIÓN
         const TIEMPO_PREGUNTA = 45;
         const ARCHIVO_ESTUDIANTES = 'estudiantes.json';
+        const GITHUB_OWNER = "alejandra-lozc";
+        const GITHUB_REPO = "desafio_unidad2";
+        const GITHUB_TOKEN = "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";
+        const GITHUB_PATH = "resultados/";
 
         let estudiantes = {};
         let estudianteActual = null;
@@ -626,8 +630,8 @@
             document.body.appendChild(overlay);
             guardarResultado();
         }
-
-        function guardarResultado() {
+        
+        async function guardarResultado() {
             const fecha = new Date().toISOString().slice(0, 10);
             const filename = 'resultado_' + estudianteActual.id + '_' + fecha + '.csv';
             const csvContent = [
@@ -638,9 +642,50 @@
                 '"Aciertos",' + acertadas,
                 '"Fallos",' + falladas,
                 '"Logros","' + Array.from(logrosDesbloqueados).join(', ') + '"'
-            ].join('\n');
-            console.log('CSV generado:', csvContent);
+        ].join('\n');
+    
+    // Si hay token configurado, subir a GitHub
+        if (typeof GITHUB_TOKEN !== 'undefined' && GITHUB_TOKEN !== 'PEGAR_AQUI_TU_TOKEN') {
+            try {
+            // Verificar si el archivo ya existe
+                let sha = undefined;
+                try {
+                    const checkRes = await fetch('https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_PATH + filename, {
+                        headers: { 'Authorization': 'token ' + GITHUB_TOKEN }
+                    });
+                    if (checkRes.ok) {
+                        const checkData = await checkRes.json();
+                        sha = checkData.sha;
+                    }
+                } catch(e) { /* No existe */ }
+            
+            // Crear o actualizar archivo
+                const payload = {
+                    message: 'Resultado de ' + estudianteActual.nombre + ' (' + estudianteActual.id + ')',
+                    content: btoa(unescape(encodeURIComponent(csvContent))),
+                    branch: 'main'
+                };
+                if (sha) payload.sha = sha;
+                
+                const res = await fetch('https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_PATH + filename, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'token ' + GITHUB_TOKEN,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            
+                if (!res.ok) throw new Error('Error en GitHub API');
+                console.log('✓ Guardado en GitHub exitosamente');
+            } catch(error) {
+                console.error('Error guardando en GitHub:', error);
+            }
+        } else {
+            console.log('CSV generado (sin token):', csvContent);
             console.log('Nombre de archivo:', filename);
+        }
+}
             // Aquí se podría agregar la llamada a la API de GitHub si se configura el token
         }
 
