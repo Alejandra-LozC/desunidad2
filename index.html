@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desafío Anatómico - Universidad Anáhuac</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #432f64 0%, #5d428c 100%);
+    color: #ffffff;
+    min-height: 100vh;
+}
+.hidden { display: none !important; }
+
+/* PANTALLA DE INICIO */
+#startScreen {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, #432f64 0%, #5d428c 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 100;
+    padding: 20px;
+}
+#startScreen h1 {
+    font-size: 3.5rem;
+    color: #fd8103;
+    margin-bottom: 15px;
+    text-shadow: 4px 4px 0 #ff5900;
+}
+#startScreen .subtitle {
+    font-size: 1.3rem;
+    color: #cdb9ef;
+    margin-bottom: 30px;
+}
+#studentIdInput {
+    font-size: 1.3rem;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: 3px solid #ff5900;
+    text-align: center;
+    margin: 15px 0;
+    width: 320px;
+    background: #ffffff;
+    color: #432f64;
+    font-weight: bold;
+}
+.start-btn {
+    font-size: 1.3rem;
+    padding: 14px 40px;
+    background: #ff5900;
+    color: #ffffff;
+    border: 3px solid #ffffff;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+.start-btn:hover { background: #fd8103; }
+#loginError {
+    color: #ff5900;
+    margin-top: 15px;
+    font-weight: bold;
+    min-height: 20px;
+}
+#debugInfo {
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #cdb9ef;
+}
+
+/* JUEGO */
+.game-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+.sidebar {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border: 2px solid #ff5900;
+    height: fit-content;
+}
+.character-box {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    border: 3px solid #ff5900;
+}
+#gameCharacter { image-rendering: pixelated; transition: transform 0.3s ease; }
+@keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px) scale(1.1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+@keyframes dance { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-10deg); } 75% { transform: rotate(10deg); } }
+.anim-jump { animation: jump 0.6s ease; }
+.anim-shake { animation: shake 0.5s ease; }
+.anim-dance { animation: dance 1s ease infinite; }
+.stats-box {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+.stats-box h3 { color: #fd8103; font-size: 1rem; margin-bottom: 8px; text-transform: uppercase; }
+.stats-box p { font-size: 1.8rem; font-weight: bold; color: #ffffff; }
+.achievements-list { flex: 1; overflow-y: auto; max-height: 300px; }
+.achievement-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-left: 4px solid #666666;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    opacity: 0.5;
+    transition: all 0.3s;
+}
+.achievement-item.unlocked {
+    background: #ff5900;
+    border-left-color: #fd8103;
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(255, 89, 0, 0.5);
+}
+.main-area { display: flex; flex-direction: column; gap: 20px; }
+.tv-screen {
+    background: #000000;
+    border: 8px solid #333333;
+    border-radius: 20px;
+    padding: 30px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+}
+.question-category { font-size: 1.3rem; color: #fd8103; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; }
+.question-text { font-size: 1.5rem; color: #ffffff; line-height: 1.4; font-weight: 600; }
+.timer-display {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ff5900;
+    background: rgba(0,0,0,0.7);
+    padding: 5px 15px;
+    border-radius: 10px;
+    border: 2px solid #ff5900;
+}
+.jeopardy-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.jeopardy-category {
+    background: #ff5900;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 15px 5px;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px solid #ffffff;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.jeopardy-cell {
+    background: #0f66ab;
+    color: #ffffff;
+    font-size: 1.8rem;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 2px solid #ffffff;
+    cursor: pointer;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.jeopardy-cell:hover:not(.answered) { background: #ff5900; transform: scale(1.05); }
+.jeopardy-cell.answered { background: #666666; color: #cccccc; cursor: not-allowed; border-color: #999999; }
+.podium {
+    background: linear-gradient(180deg, #5d428c 0%, #432f64 100%);
+    border: 4px solid #fd8103;
+    border-radius: 15px 15px 0 0;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+.podium-name { font-size: 1.5rem; font-weight: bold; color: #ffffff; text-transform: uppercase; }
+.podium-score { font-size: 2.2rem; font-weight: bold; color: #fd8103; }
+.buzzer-btn {
+    background: #ff5900;
+    color: #ffffff;
+    border: 4px solid #ffffff;
+    border-radius: 50%;
+    width: 90px;
+    height: 90px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #cc4700;
+}
+.buzzer-btn:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 #cc4700; }
+.buzzer-btn:disabled { background: #666666; box-shadow: 0 6px 0 #444444; cursor: not-allowed; color: #999999; }
+
+/* MODAL */
+.options-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(67, 47, 100, 0.95);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+.options-content {
+    background: #ffffff;
+    color: #444444;
+    padding: 30px;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 700px;
+    border: 5px solid #ff5900;
+}
+.option-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin: 8px 0;
+    font-size: 1.1rem;
+    background: #cdb9ef;
+    border: 3px solid #432f64;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    color: #444444;
+    font-weight: bold;
+}
+.option-btn:hover { background: #0f66ab; color: #ffffff; }
+.option-btn.selected { background: #ff5900; color: #ffffff; }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE INICIO -->
+<div id="startScreen">
+    <h1>DESAFÍO ANATÓMICO</h1>
+    <p class="subtitle">Universidad Anáhuac | Sistema Locomotor</p>
+    <input type="text" id="studentIdInput" placeholder="Ingresa tu ID (ej. 00554053)">
+    <button class="start-btn" id="startBtn">▶ COMENZAR JUEGO</button>
+    <p id="loginError"></p>
+    <p id="debugInfo"></p>
+</div>
+
+<!-- JUEGO -->
+<div id="gameContainer" class="game-container hidden">
+    <div class="sidebar">
+        <div class="character-box">
+            <canvas id="gameCharacter" width="120" height="120"></canvas>
+            <p style="margin-top: 10px; font-weight: bold; color: #432f64;">¡Tú puedes!</p>
+        </div>
+        <div class="stats-box">
+            <h3>Puntaje</h3>
+            <p id="sidebarScore">0000</p>
+        </div>
+        <div class="stats-box">
+            <h3>Progreso</h3>
+            <p id="sidebarProgress">0 / 16</p>
+        </div>
+        <div class="achievements-list" id="achievementsList"></div>
+    </div>
+
+    <div class="main-area">
+        <div class="tv-screen">
+            <div class="timer-display" id="timerDisplay">45s</div>
+            <div class="question-category" id="tvCategory">SELECCIONA UNA CATEGORÍA</div>
+            <div class="question-text" id="tvQuestion">Haz clic en un valor del tablero</div>
+        </div>
+        <div class="jeopardy-board" id="jeopardyBoard"></div>
+        <div class="podium">
+            <div>
+                <div class="podium-name" id="podiumName">JUGADOR</div>
+                <div style="font-size: 0.9rem; color: #cdb9ef;">Universidad Anáhuac</div>
+            </div>
+            <div class="podium-score" id="podiumScore">$0000</div>
+            <button class="buzzer-btn" id="buzzerBtn" disabled>¡RESPONDER!</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE OPCIONES -->
+<div id="optionsModal" class="options-modal">
+    <div class="options-content">
+        <h2 id="modalQuestionText" style="color: #432f64; margin-bottom: 20px; font-size: 1.3rem;"></h2>
+        <div id="modalOptions"></div>
+    </div>
+</div>
+
+<script>
+// ========== VARIABLES GLOBALES ==========
+var TIEMPO_PREGUNTA = 45;
+var ARCHIVO_ESTUDIANTES = 'estudiantes.json';
+
+var estudiantes = {};
+var estudianteActual = null;
+var puntaje = 0;
+var preguntasContestadas = 0;
+var acertadas = 0;
+var falladas = 0;
+var rachaActual = 0;
+var preguntaActual = null;
+var opcionSeleccionada = -1;
+var timerInterval = null;
+var tiempoRestante = TIEMPO_PREGUNTA;
+var logrosDesbloqueados = {};
+var tablero = [];
+
+var categorias = ["PUBLICACIÓN", "ANATOMÍA", "COLÁGENO", "BIOMEDICINA"];
+var valores = [100, 200, 300, 400];
+
+var logros = [
+    {id: "PRIMERA", nombre: "Primera Sangre", desc: "Responde tu primera pregunta", icono: ""},
+    {id: "EXPLORADOR", nombre: "Explorador", desc: "Visita las 4 categorías", icono: "️"},
+    {id: "RACHA", nombre: "Racha de 3", desc: "3 correctas seguidas", icono: "🔥"},
+    {id: "MAESTRO", nombre: "Maestro Anatómico", desc: "Obtén 4000 puntos", icono: "👑"}
+];
+
+var charSprite = [
+    [0,0,1,1,1,1,1,1,0,0],
+    [0,1,2,2,2,2,2,2,1,0],
+    [1,2,3,2,2,2,2,3,2,1],
+    [1,2,2,2,2,2,2,2,2,1],
+    [1,2,2,4,4,4,4,2,2,1],
+    [1,2,2,2,2,2,2,2,2,1],
+    [0,1,2,2,2,2,2,2,1,0],
+    [0,0,1,5,5,5,5,1,0,0],
+    [0,1,5,5,5,5,5,5,1,0],
+    [0,1,6,0,0,0,0,6,1,0]
+];
+var charColors = {0:'transparent', 1:'#000000', 2:'#fd8103', 3:'#432f64', 4:'#ff5900', 5:'#0f66ab', 6:'#ffffff'};
+
+// ========== FUNCIONES DE PERSONAJE ==========
+function drawCharacter() {
+    var canvas = document.getElementById('gameCharacter');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var scale = 12;
+    var offsetX = (canvas.width - 10 * scale) / 2;
+    var offsetY = (canvas.height - 10 * scale) / 2;
+    var y, x;
+    for (y = 0; y < 10; y++) {
+        for (x = 0; x < 10; x++) {
+            if (charSprite[y][x] !== 0) {
+                ctx.fillStyle = charColors[charSprite[y][x]];
+                ctx.fillRect(offsetX + x * scale, offsetY + y * scale, scale, scale);
+            }
+        }
+    }
+}
+
+function animarPersonaje(accion) {
+    var canvas = document.getElementById('gameCharacter');
+    if (!canvas) return;
+    canvas.className = '';
+    void canvas.offsetWidth;
+    if (accion === 'correcto') canvas.classList.add('anim-jump');
+    if (accion === 'incorrecto') canvas.classList.add('anim-shake');
+    if (accion === 'logro') canvas.classList.add('anim-dance');
+}
+
+// ========== CARGAR ESTUDIANTES ==========
+function cargarEstudiantes() {
+    console.log('Iniciando carga de estudiantes...');
+    var debugInfo = document.getElementById('debugInfo');
+    
+    fetch(ARCHIVO_ESTUDIANTES)
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            console.log('JSON cargado:', data);
+            if (!Array.isArray(data)) {
+                throw new Error('El JSON no es un array');
+            }
+            var i, e, id;
+            for (i = 0; i < data.length; i++) {
+                e = data[i];
+                id = String(e.id).trim();
+                estudiantes[id] = e.nombre;
+                estudiantes[String(parseInt(id, 10))] = e.nombre;
+                estudiantes[String(parseInt(id, 10)).padStart(8, '0')] = e.nombre;
+            }
+            console.log('Total estudiantes:', Object.keys(estudiantes).length);
+            if (debugInfo) {
+                debugInfo.textContent = '✓ ' + Object.keys(estudiantes).length + ' estudiantes cargados';
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            if (debugInfo) {
+                debugInfo.textContent = '✗ Error: ' + error.message;
+            }
+        });
+}
+
+// ========== INICIAR JUEGO ==========
+function iniciarJuego() {
+    console.log('Botón clickeado - iniciarJuego()');
+    var idInput = document.getElementById('studentIdInput').value.trim();
+    var errorDiv = document.getElementById('loginError');
+    
+    if (!idInput) {
+        errorDiv.textContent = '⚠️ Por favor ingresa tu ID';
+        return;
+    }
+    
+    console.log('ID ingresado:', idInput);
+    
+    var nombre = estudiantes[idInput] || estudiantes[String(parseInt(idInput, 10))] || estudiantes[String(parseInt(idInput, 10)).padStart(8, '0')];
+    
+    if (!nombre) {
+        errorDiv.textContent = '❌ ID no encontrado: ' + idInput;
+        return;
+    }
+    
+    console.log('Estudiante encontrado:', nombre);
+    errorDiv.textContent = '';
+    
+    estudianteActual = {
+        id: String(parseInt(idInput, 10)).padStart(8, '0'),
+        nombre: nombre
+    };
+    
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('gameContainer').classList.remove('hidden');
+    document.getElementById('podiumName').textContent = nombre.split(',')[0].toUpperCase();
+    document.getElementById('sidebarScore').textContent = '0000';
+    document.getElementById('podiumScore').textContent = '$0000';
+    
+    inicializarTablero();
+    renderizarLogros();
+    drawCharacter();
+    
+    // Asignar evento al botón del podio
+    document.getElementById('buzzerBtn').onclick = confirmarRespuesta;
+}
+
+// ========== TABLERO ==========
+function inicializarTablero() {
+    var preguntasData = [
+        [{cat:"PUBLICACIÓN", val:100, enun:"Nombre de la revista indexada donde se publicó el artículo.", ops:["The Lancet","Universitas Médica","Nature Medicine","Revista Médica Ecuador"], correcta:1, retro:"El artículo se publicó en Universitas Médica, de la Pontificia Universidad Javeriana."},
+         {cat:"PUBLICACIÓN", val:200, enun:"Código único y permanente que identifica al artículo.", ops:["ISBN","PMID","DOI","ISSN"], correcta:2, retro:"El DOI es la huella digital del artículo: nunca cambia."},
+         {cat:"PUBLICACIÓN", val:300, enun:"Volumen y número de la publicación (año 2019).", ops:["Vol. 55, No. 1","Vol. 60, No. 2","Vol. 45, No. 3","Vol. 70, No. 4"], correcta:1, retro:"Se publicó en el Volumen 60, Número 2."},
+         {cat:"PUBLICACIÓN", val:400, enun:"Comité que aprobó el protocolo de investigación.", ops:["Comité Internacional","Comité de Ética institucional","Comité de Pacientes","Ninguno"], correcta:1, retro:"Fue aprobado por el comité de ética institucional."}],
+        [{cat:"ANATOMÍA", val:100, enun:"Estructura que recubre externamente al hueso (excepto en articulaciones).", ops:["Endostio","Periostio","Epimisio","Pericondrio"], correcta:1, retro:"El periostio es la 'piel del hueso': membrana de tejido conectivo."},
+         {cat:"ANATOMÍA", val:200, enun:"Parte del hueso largo donde ocurre la hiperostosis cortical.", ops:["Epífisis","Metáfisis","Diáfisis","Fisis"], correcta:2, retro:"La diáfisis es el cuerpo central del hueso largo."},
+         {cat:"ANATOMÍA", val:300, enun:"Huesos afectados típicamente en la Enfermedad de Caffey.", ops:["Cráneo y vértebra","Tibias, radio, maxilar inferior y clavículas","Solo manos y pies","Pelvis y sacro"], correcta:1, retro:"Las zonas típicas son tibias, radios, maxilar inferior y clavículas."},
+         {cat:"ANATOMÍA", val:400, enun:"Tipo de tejido que forma el periostio.", ops:["Tejido epitelial","Tejido muscular","Tejido conectivo denso","Tejido nervioso"], correcta:2, retro:"Está formado por tejido conectivo denso, rico en vasos y nervios."}],
+        [{cat:"COLÁGENO", val:100, enun:"Propiedad que le da el colágeno tipo I al hueso.", ops:["Rigidez total","Resistencia a la tracción y flexibilidad","Conductividad","Contracción"], correcta:1, retro:"Da flexibilidad y resistencia a la tracción, como varillas de acero."},
+         {cat:"COLÁGENO", val:200, enun:"Porcentaje de la matriz ósea que es colágeno tipo I.", ops:["10%","50%","90%","100%"], correcta:2, retro:"Aproximadamente el 90% de la matriz ósea es colágeno tipo I."},
+         {cat:"COLÁGENO", val:300, enun:"¿Por qué una alteración del colágeno I afecta hueso, piel y articulaciones?", ops:["Misma arteria","Es componente de la matriz en múltiples tejidos conectivos","Conexión nerviosa","Mismo origen muscular"], correcta:1, retro:"Está presente en todos esos tejidos conectivos."},
+         {cat:"COLÁGENO", val:400, enun:"Gen donde ocurre la mutación asociada a la Enfermedad de Caffey.", ops:["COL1A1","COL2A1","FBN1","ELN"], correcta:0, retro:"La mutación ocurre en el gen COL1A1 (transición 3040 C>T en el exón 41)."}],
+        [{cat:"BIOMEDICINA", val:100, enun:"Característica a replicar en un scaffold para la diáfisis.", ops:["Color blanco","Estructura fibrilar y resistencia a tracción","Conductividad eléctrica","Contracción rítmica"], correcta:1, retro:"Debe imitar la estructura fibrilar para la osteointegración."},
+         {cat:"BIOMEDICINA", val:200, enun:"Dónde enfocar un algoritmo de IA para detectar Caffey en radiografías.", ops:["Epífisis","Diáfisis buscando engrosamiento cortical","Exclusivamente cráneo","Discos intervertebrales"], correcta:1, retro:"Debe buscar engrosamiento cortical en la diáfisis de tibia y radio."},
+         {cat:"BIOMEDICINA", val:300, enun:"Material ideal para un scaffold de colágeno defectuoso.", ops:["Metal puro","Compuesto polímero-cerámico con fibras","Vidrio","Madera"], correcta:1, retro:"Imita mejor la matriz ósea natural."},
+         {cat:"BIOMEDICINA", val:400, enun:"Dispositivo biomédico para monitorear la evolución.", ops:["Electrocardiógrafo","Software de análisis de imágenes radiológicas","Oxímetro","Glucómetro"], correcta:1, retro:"Permite cuantificar el engrosamiento cortical."}]
+    ];
+    
+    tablero = [];
+    var c, v;
+    for (c = 0; c < 4; c++) {
+        tablero[c] = [];
+        for (v = 0; v < 4; v++) {
+            tablero[c][v] = {
+                cat: preguntasData[c][v].cat,
+                val: preguntasData[c][v].val,
+                enun: preguntasData[c][v].enun,
+                ops: preguntasData[c][v].ops,
+                correcta: preguntasData[c][v].correcta,
+                retro: preguntasData[c][v].retro,
+                id: c + '-' + v,
+                contestada: false
+            };
+        }
+    }
+    construirTableroUI();
+}
+
+function construirTableroUI() {
+    var board = document.getElementById('jeopardyBoard');
+    board.innerHTML = '';
+    var c, v, div, cell;
+    for (c = 0; c < 4; c++) {
+        div = document.createElement('div');
+        div.className = 'jeopardy-category';
+        div.textContent = categorias[c];
+        board.appendChild(div);
+    }
+    for (v = 0; v < 4; v++) {
+        for (c = 0; c < 4; c++) {
+            cell = document.createElement('div');
+            cell.className = 'jeopardy-cell';
+            cell.textContent = valores[v];
+            cell.id = 'cell-' + c + '-' + v;
+            (function(cc, vv) {
+                cell.onclick = function() {
+                    abrirPregunta(cc, vv);
+                };
+            })(c, v);
+            board.appendChild(cell);
+        }
+    }
+}
+
+// ========== PREGUNTA ==========
+function abrirPregunta(c, v) {
+    if (tablero[c][v].contestada) return;
+    preguntaActual = tablero[c][v];
+    opcionSeleccionada = -1;
+    tiempoRestante = TIEMPO_PREGUNTA;
+    
+    document.getElementById('tvCategory').textContent = preguntaActual.cat + ' - $' + preguntaActual.val;
+    document.getElementById('tvQuestion').textContent = preguntaActual.enun;
+    document.getElementById('modalQuestionText').textContent = preguntaActual.enun;
+    
+    var optsDiv = document.getElementById('modalOptions');
+    optsDiv.innerHTML = '';
+    var i, btn;
+    for (i = 0; i < preguntaActual.ops.length; i++) {
+        btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = preguntaActual.ops[i];
+        (function(idx, b) {
+            b.onclick = function() {
+                var allBtns = document.querySelectorAll('.option-btn');
+                var j;
+                for (j = 0; j < allBtns.length; j++) {
+                    allBtns[j].classList.remove('selected');
+                }
+                b.classList.add('selected');
+                opcionSeleccionada = idx;
+                document.getElementById('buzzerBtn').disabled = false;
+            };
+        })(i, btn);
+        optsDiv.appendChild(btn);
+    }
+    
+    document.getElementById('optionsModal').style.display = 'flex';
+    document.getElementById('buzzerBtn').disabled = true;
+    iniciarTimer();
+}
+
+function iniciarTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    document.getElementById('timerDisplay').textContent = tiempoRestante + 's';
+    document.getElementById('timerDisplay').style.color = '#ff5900';
+    timerInterval = setInterval(function() {
+        tiempoRestante--;
+        document.getElementById('timerDisplay').textContent = tiempoRestante + 's';
+        if (tiempoRestante <= 10) {
+            document.getElementById('timerDisplay').style.color = '#ff0000';
+        }
+        if (tiempoRestante <= 0) {
+            clearInterval(timerInterval);
+            procesarRespuesta(-1);
+        }
+    }, 1000);
+}
+
+function confirmarRespuesta() {
+    if (opcionSeleccionada === -1) return;
+    if (timerInterval) clearInterval(timerInterval);
+    procesarRespuesta(opcionSeleccionada);
+}
+
+function procesarRespuesta(resp) {
+    document.getElementById('optionsModal').style.display = 'none';
+    document.getElementById('buzzerBtn').disabled = true;
+    
+    var correcta = (resp === preguntaActual.correcta);
+    var partes = preguntaActual.id.split('-');
+    var c = parseInt(partes[0]);
+    var v = parseInt(partes[1]);
+    
+    tablero[c][v].contestada = true;
+    var cell = document.getElementById('cell-' + c + '-' + v);
+    if (cell) {
+        cell.classList.add('answered');
+        cell.textContent = '✓';
+    }
+    preguntasContestadas++;
+    
+    if (correcta) {
+        puntaje += preguntaActual.val;
+        acertadas++;
+        rachaActual++;
+        animarPersonaje('correcto');
+        setTimeout(function() {
+            alert('✅ ¡CORRECTO! +$' + preguntaActual.val + '\n\n💡 ' + preguntaActual.retro);
+        }, 100);
+    } else {
+        falladas++;
+        rachaActual = 0;
+        animarPersonaje('incorrecto');
+        setTimeout(function() {
+            alert('❌ INCORRECTO\n\nLa respuesta era: ' + preguntaActual.ops[preguntaActual.correcta] + '\n\n' + preguntaActual.retro);
+        }, 100);
+    }
+    
+    actualizarUI();
+    verificarLogros();
+    
+    if (preguntasContestadas === 16) {
+        setTimeout(finalizarJuego, 1500);
+    } else {
+        document.getElementById('tvCategory').textContent = 'SELECCIONA UNA CATEGORÍA';
+        document.getElementById('tvQuestion').textContent = 'Haz clic en un valor del tablero para continuar';
+    }
+}
+
+function actualizarUI() {
+    var scoreStr = String(puntaje).padStart(4, '0');
+    document.getElementById('sidebarScore').textContent = scoreStr;
+    document.getElementById('podiumScore').textContent = '$' + scoreStr;
+    document.getElementById('sidebarProgress').textContent = preguntasContestadas + ' / 16';
+}
+
+// ========== LOGROS ==========
+function verificarLogros() {
+    if (!logrosDesbloqueados['PRIMERA'] && preguntasContestadas >= 1) {
+        logrosDesbloqueados['PRIMERA'] = true;
+        mostrarLogro('PRIMERA');
+    }
+    if (!logrosDesbloqueados['EXPLORADOR']) {
+        var catsVisitadas = {};
+        var c, v;
+        for (c = 0; c < 4; c++) {
+            for (v = 0; v < 4; v++) {
+                if (tablero[c][v].contestada) {
+                    catsVisitadas[c] = true;
+                }
+            }
+        }
+        if (Object.keys(catsVisitadas).length >= 4) {
+            logrosDesbloqueados['EXPLORADOR'] = true;
+            mostrarLogro('EXPLORADOR');
+        }
+    }
+    if (!logrosDesbloqueados['RACHA'] && rachaActual >= 3) {
+        logrosDesbloqueados['RACHA'] = true;
+        mostrarLogro('RACHA');
+    }
+    if (!logrosDesbloqueados['MAESTRO'] && puntaje >= 4000) {
+        logrosDesbloqueados['MAESTRO'] = true;
+        mostrarLogro('MAESTRO');
+    }
+}
+
+function mostrarLogro(id) {
+    var logro = null;
+    var i;
+    for (i = 0; i < logros.length; i++) {
+        if (logros[i].id === id) {
+            logro = logros[i];
+            break;
+        }
+    }
+    if (!logro) return;
+    animarPersonaje('logro');
+    setTimeout(function() {
+        alert('🏆 ¡LOGRO DESBLOQUEADO! 🏆\n\n' + logro.icono + ' ' + logro.nombre + '\n' + logro.desc);
+    }, 200);
+    renderizarLogros();
+}
+
+function renderizarLogros() {
+    var list = document.getElementById('achievementsList');
+    if (!list) return;
+    list.innerHTML = '<h3 style="color:#fd8103; margin-bottom:10px; font-size:1rem;">LOGROS</h3>';
+    var i, l, unlocked, div;
+    for (i = 0; i < logros.length; i++) {
+        l = logros[i];
+        unlocked = logrosDesbloqueados[l.id];
+        div = document.createElement('div');
+        div.className = 'achievement-item' + (unlocked ? ' unlocked' : '');
+        div.innerHTML = '<strong>' + (unlocked ? l.icono : '🔒') + ' ' + l.nombre + '</strong><br><small>' + l.desc + '</small>';
+        list.appendChild(div);
+    }
+}
+
+// ========== FINALIZAR ==========
+function finalizarJuego() {
+    document.getElementById('gameContainer').classList.add('hidden');
+    
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#432f64 0%,#5d428c 100%);z-index:2000;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;';
+    overlay.innerHTML = '<h1 style="font-size:3rem;color:#fd8103;margin-bottom:20px;">¡JUEGO TERMINADO!</h1>' +
+        '<p style="font-size:1.8rem;color:#ffffff;margin:20px 0;">Puntaje Final: <span style="color:#fd8103;font-size:2.5rem;">$' + String(puntaje).padStart(4, '0') + '</span></p>' +
+        '<p style="font-size:1.2rem;color:#cdb9ef;">Aciertos: ' + acertadas + ' | Fallos: ' + falladas + '</p>' +
+        '<p style="margin-top:20px;color:#ff5900;font-weight:bold;">Descarga tu resultado</p>' +
+        '<button id="downloadBtn" style="font-size:1.2rem;padding:14px 40px;background:#ff5900;color:#ffffff;border:3px solid #ffffff;border-radius:10px;cursor:pointer;font-weight:bold;margin-top:20px;">📥 DESCARGAR CSV</button>';
+    document.body.appendChild(overlay);
+    
+    document.getElementById('downloadBtn').onclick = descargarCSV;
+}
+
+function descargarCSV() {
+    var fecha = new Date().toISOString().slice(0, 10);
+    var filename = 'resultado_' + estudianteActual.id + '_' + fecha + '.csv';
+    var csvContent = [
+        '"Estudiante","' + estudianteActual.nombre + '"',
+        '"ID","' + estudianteActual.id + '"',
+        '"Fecha","' + fecha + '"',
+        '"Puntaje",' + puntaje,
+        '"Aciertos",' + acertadas,
+        '"Fallos",' + falladas,
+        '"Logros","' + Object.keys(logrosDesbloqueados).join(', ') + '"'
+    ].join('\n');
+    
+    var blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    
+    alert('✅ CSV descargado: ' + filename + '\n\nSube este archivo a la carpeta "resultados" del repositorio de GitHub.');
+}
+
+// ========== INICIALIZACIÓN ==========
+window.onload = function() {
+    console.log('Página cargada');
+    cargarEstudiantes();
+    
+    // Asignar evento al botón de inicio
+    document.getElementById('startBtn').onclick = iniciarJuego;
+    
+    // Permitir Enter en el input
+    document.getElementById('studentIdInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            iniciarJuego();
+        }
+    });
+};
+</script>
+
+</body>
+</html>
