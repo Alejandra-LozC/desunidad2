@@ -1,0 +1,25 @@
+function finalizarJuego() {
+    document.getElementById('gameContainer').classList.add('hidden');
+    document.getElementById('endScreen').classList.remove('hidden');
+    document.getElementById('finalScore').textContent = '$' + String(puntaje).padStart(4, '0');
+    document.getElementById('finalStats').textContent = 'Aciertos: ' + acertadas + ' | Fallos: ' + falladas;
+    
+    // Enviar datos a Streamlit
+    var datosResultado = {
+        tipo: 'resultado_final',
+        id: estudianteActual.id,
+        nombre: estudianteActual.nombre,
+        puntaje: puntaje,
+        acertadas: acertadas,
+        falladas: falladas,
+        logros: Object.keys(logrosDesbloqueados).join(', ')
+    };
+    
+    // Enviar a Streamlit via postMessage
+    if (window.parent !== window) {
+        window.parent.postMessage(datosResultado, '*');
+    }
+    
+    document.getElementById('savingStatus').textContent = "✅ ¡Juego completado! Tu profesora recibirá los resultados.";
+    document.getElementById('savingStatus').style.color = "#00ff00";
+}
